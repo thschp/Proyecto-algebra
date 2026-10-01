@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Matriz Lab</title>
+  <desc id="desc">Ícono verde con forma redondeada y la letra M en blanco</desc>
+  <rect width="256" height="256" rx="64" fill="#1d735f"/>
+  <path d="M70 174V82h28l30 43 30-43h28v92h-25v-57l-33 46h-1l-33-46v57z" fill="#ffffff"/>
+</svg>

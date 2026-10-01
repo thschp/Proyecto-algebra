@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análisis molecular mediante matrices</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style01.css">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+</head>
+
+<body>
+
+  <header class="site-header">
+    <a class="brand" href="#inicio" aria-label="Ir al inicio">
+      <span class="brand-mark">M</span><span>matriz<span class="brand-dot">.</span>lab</span>
+    </a>
+
+    <nav aria-label="Navegación principal">
+      <a href="#inicio">Inicio</a><a href="#analizador">Analizador</a><a href="#como-funciona">Cómo funciona</a>
+    </nav>
+
+  </header>
+
+  <main>
+
+    <section class="hero" id="inicio">
+
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Álgebra aplicada · Química molecular</p>
+
+        <h1>Análisis molecular<br><em>mediante matrices.</em></h1>
+
+        <p class="hero-text">
+          Representa una molécula mediante una matriz de adyacencia y descubre su estructura, conectividad y propiedades matemáticas.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn btn-primary" data-scroll="#analizador">Crear molécula <span>→</span></button>
+          <button class="btn btn-ghost" data-load-example>Ver ejemplo <span>↘</span></button>
+        </div>
+
+        </div>
+
+      <div class="hero-visual" aria-label="Visualización decorativa de una molécula">
+        <svg class="hero-molecule-svg" viewBox="0 0 560 430" role="img" aria-label="Molécula de ejemplo">
+          <ellipse class="hero-orbit orbit-one" cx="280" cy="215" rx="245" ry="105" />
+          <ellipse class="hero-orbit orbit-two" cx="280" cy="215" rx="170" ry="205" />
+          <g class="hero-bonds"><line x1="155" y1="215" x2="245" y2="215" /><line x1="315" y1="215" x2="405" y2="215" /><line x1="280" y1="180" x2="280" y2="105" /><line x1="280" y1="250" x2="280" y2="325" /></g>
+          <g class="hero-node hero-node-h"><circle cx="120" cy="215" r="35" /><text x="120" y="215">H</text><text class="hero-number" x="120" y="237">1</text></g>
+          <g class="hero-node hero-node-c"><circle cx="280" cy="215" r="35" /><text x="280" y="215">C</text><text class="hero-number" x="280" y="237">6</text></g>
+          <g class="hero-node hero-node-o"><circle cx="440" cy="215" r="35" /><text x="440" y="215">Cl</text><text class="hero-number" x="440" y="237">17</text></g>
+          <g class="hero-node hero-node-h"><circle cx="280" cy="70" r="35" /><text x="280" y="70">H</text><text class="hero-number" x="280" y="92">1</text></g>
+          <g class="hero-node hero-node-h"><circle cx="280" cy="360" r="35" /><text x="280" y="360">H</text><text class="hero-number" x="280" y="382">1</text></g>
+        </svg>
+        <div class="orbital orbital-a"></div>
+        <div class="orbital orbital-b"></div>
+
+        <div class="molecule molecule-hero">
+          <div class="bond bond-1"></div>
+          <div class="bond bond-2"></div>
+          <div class="bond bond-3"></div>
+
+          <div class="atom atom-c">C<small>6</small></div>
+          <div class="atom atom-o">O<small>8</small></div>
+          <div class="atom atom-h1">H<small>1</small></div>
+          <div class="atom atom-h2">H<small>1</small></div>
+
+          <div class="visual-label label-c">carbono</div>
+          <div class="visual-label label-o">oxígeno</div>
+        </div>
+
+    </section>
+
+    <section class="workspace-section" id="analizador">
+
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">01 · Construye tu molécula</p>
+          <h2>Del átomo a la matriz.</h2>
+        </div>
+        <p>Elige cómo quieres comenzar. Puedes crear los enlaces manualmente o introducir una matriz existente.</p>
+      </div>
+
+      <div class="mode-tabs" role="tablist">
+        <button class="mode-tab active" data-mode="builder" role="tab">Crear molécula <span>01</span></button>
+        <button class="mode-tab" data-mode="matrix" role="tab">Introducir matriz <span>02</span></button>
+      </div>
+
+      <div class="input-panels">
+
+        <section class="panel builder-panel" data-panel="builder">
+
+          <div class="panel-title">
+            <span class="step-number">01</span>
+            <div>
+              <h3>Define los átomos</h3>
+              <p>Escribe el símbolo químico de cada átomo.</p>
+            </div>
+          </div>
+
+          <label class="field-label" for="molecule-name">Nombre de la molécula <span>(opcional)</span></label>
+          <input id="molecule-name" class="text-input" type="text" placeholder="Ej. Etanol">
+
+          <div class="atoms-toolbar">
+            <label class="field-label">Átomos</label>
+            <button class="text-button" id="add-atom">+ Añadir átomo</button>
+          </div>
+          <div id="atom-list" class="atom-list"></div>
+
+          <div class="panel-divider"></div>
+
+          <div class="panel-title compact">
+            <span class="step-number">02</span>
+            <div>
+              <h3>Define los enlaces</h3>
+              <p>Conecta dos átomos e indica su multiplicidad.</p>
+            </div>
+          </div>
+
+          <div id="bond-list" class="bond-list"></div>
+          <button class="add-bond" id="add-bond">+ Añadir conexión</button>
+
+          <div id="builder-error" class="error-message" role="alert"></div>
+          <button class="btn btn-primary analyze-button" id="analyze-builder">Analizar molécula <span>→</span></button>
+
+        </section>
+
+        <section class="panel matrix-panel hidden" data-panel="matrix">
+
+          <div class="panel-title">
+            <span class="step-number">01</span>
+            <div>
+              <h3>Introduce la matriz</h3>
+              <p>Usa filas separadas por saltos de línea y espacios entre valores.</p>
+            </div>
+          </div>
+
+          <label class="field-label" for="matrix-name">Nombre de la molécula <span>(opcional)</span></label>
+          <input id="matrix-name" class="text-input" type="text" placeholder="Ej. Eteno">
+
+          <label class="field-label" for="matrix-labels">Etiquetas de los átomos <span>(opcional, una por átomo)</span></label>
+          <input id="matrix-labels" class="text-input" type="text" placeholder="Ej. C C O H H H H H H">
+          <div class="matrix-hint"><span>Separa las etiquetas con espacios</span><span>Si lo dejas vacío se infieren automáticamente</span></div>
+
+          <label class="field-label matrix-label" for="matrix-input">Matriz de adyacencia</label>
+          <textarea id="matrix-input" class="matrix-input" spellcheck="false">0 2 1 1 0 0
+2 0 0 0 1 1
+1 0 0 0 0 0
+1 0 0 0 0 0
+0 1 0 0 0 0
+0 1 0 0 0 0</textarea>
+
+          <div class="matrix-hint">
+            <span>i,j ∈ {0, 1, 2, 3}</span>
+            <span>Debe ser cuadrada y simétrica</span>
+          </div>
+
+          <div id="matrix-error" class="error-message" role="alert"></div>
+          <button class="btn btn-primary analyze-button" id="analyze-matrix">Analizar matriz <span>→</span></button>
+
+        </section>
+
+      </div>
+    </section>
+
+    <section class="results-section hidden" id="results">
+
+      <div class="results-heading">
+        <div>
+          <p class="eyebrow">02 · Lectura de resultados</p>
+          <h2 id="result-title">Tu molécula, en datos.</h2>
+        </div>
+        <button class="btn btn-outline" id="edit-analysis">← Editar entrada</button>
+      </div>
+
+      <div class="metrics-grid">
+        <article class="metric-card accent">
+          <span>Átomos</span>
+          <strong id="metric-atoms">—</strong>
+          <small>nodos en la estructura</small>
+        </article>
+
+        <article class="metric-card">
+          <span>Conexiones</span>
+          <strong id="metric-connections">—</strong>
+          <small>pares unidos</small>
+        </article>
+
+        <article class="metric-card">
+          <span>Orden total</span>
+          <strong id="metric-order">—</strong>
+          <small>multiplicidad acumulada</small>
+        </article>
+
+        <article class="metric-card">
+          <span>Componentes</span>
+          <strong id="metric-components">—</strong>
+          <small id="connectivity-label">estructura conectada</small>
+        </article>
+      </div>
+
+      <div class="results-grid">
+        <article class="result-card matrix-result">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">Matriz de adyacencia</p>
+              <h3 id="matrix-result-name">Estructura base</h3>
+            </div>
+            <div class="matrix-actions">
+              <button class="copy-matrix-button" id="copy-matrix" type="button">Copiar matriz</button>
+              <span class="card-icon">⌗</span>
+            </div>
+          </div>
+          <div id="matrix-output" class="matrix-output"></div>
+        </article>
+        
+        <article class="result-card graph-result">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">Representación visual</p>
+              <h3>Mapa molecular</h3>
+            </div>
+            <span class="card-icon">◌</span>
+          </div>
+          <div id="graph-output" class="graph-output"></div>
+        </article>
+      </div>
+
+      <div class="details-grid">
+        <article class="detail-card">
+          <p class="eyebrow">Grado de cada átomo</p>
+          <div id="degree-output" class="degree-list"></div>
+        </article>
+
+        <article class="detail-card">
+          <p class="eyebrow">Estructura de conectividad</p>
+          <div id="connectivity-output"></div>
+        </article>
+      </div>
+
+    </section>
+
+    <section class="how-section" id="como-funciona">
+      <p class="eyebrow">03 · Cómo funciona</p>
+      <h2>La matriz cuenta la historia<br>de cada molécula.</h2>
+
+      <div class="how-grid">
+        <div>
+          <span>01</span>
+          <h3>Representa</h3>
+          <p>Cada átomo se convierte en un nodo y cada enlace, en una conexión.</p>
+        </div>
+
+        <div>
+          <span>02</span>
+          <h3>Calcula</h3>
+          <p>La matriz revela grados, enlaces, orden total y componentes.</p>
+        </div>
+
+        <div>
+          <span>03</span>
+          <h3>Comprende</h3>
+          <p>Observa el grafo y encuentra patrones en la estructura.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+
+  <script src="script01.js"></script>
+</body>
+
+</html>
