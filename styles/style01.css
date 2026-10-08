@@ -620,6 +620,49 @@ nav a,
   margin-top: 8px;
 }
 
+.check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.check-label input {
+  accent-color: var(--green);
+}
+
+.pubchem-info {
+  margin-top: 14px;
+  padding: 11px 14px;
+  border-left: 3px solid var(--green);
+  background: var(--mint);
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.pubchem-info code {
+  font: 13px 'Space Grotesk';
+  letter-spacing: .04em;
+}
+
+.pubchem-info a {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.matrix-hint a {
+  color: var(--muted)
+}
+
+.analyze-button:disabled {
+  opacity: .65;
+  cursor: wait;
+  transform: none;
+}
 
 .results-section {
   background: var(--cream);
@@ -936,6 +979,15 @@ footer {
 
   .header-link {
     display: none;
+  }
+
+  .mode-tabs {
+    gap: 22px;
+    overflow-x: auto;
+  }
+
+  .mode-tab {
+    white-space: nowrap;
   }
 
   .hero h1 {

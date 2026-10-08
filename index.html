@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/style01.css">
   <link rel="icon" type="image/svg+xml" href="media/logo.svg">
+  <script src="scripts/script01.js" defer></script>
+  <script src="scripts/pubchem.js" defer></script>
 </head>
 
 <body>
@@ -83,12 +85,13 @@
           <p class="eyebrow">01 · Construye tu molécula</p>
           <h2>Del átomo a la matriz.</h2>
         </div>
-        <p>Elige cómo quieres comenzar. Puedes crear los enlaces manualmente o introducir una matriz existente.</p>
+        <p>Elige cómo quieres comenzar. Puedes crear los enlaces manualmente, introducir una matriz existente o buscar una molécula por su nombre.</p>
       </div>
 
       <div class="mode-tabs" role="tablist">
         <button class="mode-tab active" data-mode="builder" role="tab">Crear molécula <span>01</span></button>
         <button class="mode-tab" data-mode="matrix" role="tab">Introducir matriz <span>02</span></button>
+        <button class="mode-tab" data-mode="pubchem" role="tab">Buscar molécula<span>03</span></button>
       </div>
 
       <div class="input-panels">
@@ -141,7 +144,7 @@
           </div>
 
           <label class="field-label" for="matrix-name">Nombre de la molécula <span>(opcional)</span></label>
-          <input id="matrix-name" class="text-input" type="text" placeholder="Ej. Eteno">
+          <input id="matrix-name" class="text-input" type="text" placeholder="Ej. Etileno">
 
           <label class="field-label" for="matrix-labels">Etiquetas de los átomos <span>(opcional, una por átomo)</span></label>
           <input id="matrix-labels" class="text-input" type="text" placeholder="Ej. C C O H H H H H H">
@@ -162,6 +165,31 @@
 
           <div id="matrix-error" class="error-message" role="alert"></div>
           <button class="btn btn-primary analyze-button" id="analyze-matrix">Analizar matriz <span>→</span></button>
+
+        </section>
+
+        <section class="panel pubchem-panel hidden" data-panel="pubchem">
+
+          <div class="panel-title">
+            <span class="step-number">01</span>
+            <div>
+              <h3>Busca una molécula en PubChem</h3>
+              <p>Escribe el nombre o la fórmula de la molécula para buscarla en la base de datos de PubChem y analizarla.</p>
+            </div>
+          </div>
+
+          <label class="field-label" for="pubchem-name">Nombre de la molécula</label>
+          <input id="pubchem-name" class="text-input" type="text" placeholder="Ej. Cafeína o caffeine, C₆H₁₂O₆">
+          <div class="matrix-hint">
+            <span>Acepta nombres en español o en inglés</span>
+            <span>Datos obtenidos de: <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">PubChem (NIH)</a> y <a href="https://www.wikidata.org/wiki/Wikidata:Main_Page" target="_blank" rel="noopener">Wikidata</a></span>
+          </div>
+
+          <label class="check-label"><input id="pubchem-hydrogens" type="checkbox" checked> Incluir hidrógenos</label>
+
+          <div id="pubchem-error" class="error-message" role="alert"></div>
+          <div id="pubchem-info" class="pubchem-info hidden"></div>
+          <button class="btn btn-primary analyze-button" id="analyze-pubchem">Buscar y analizar <span>→</span></button>
 
         </section>
 
@@ -272,8 +300,6 @@
 
   </main>
 
-
-  <script src="scripts/script01.js"></script>
 </body>
 
 </html>

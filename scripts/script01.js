@@ -644,18 +644,17 @@ document.addEventListener('click', (event) => {
   }
 
   if (target.matches('[data-load-example]')) {
-    state.atoms = ['C', 'C', 'O', 'H'];
-    state.bonds = [[0, 1, 1], [1, 2, 1], [2, 3, 1]];
-    $('#molecule-name').value = 'Etanol';
+    state.atoms = ['C', 'C', 'H', 'H','H', 'H'];
+    state.bonds = [[0, 1, 2], [0, 2, 1], [0, 3, 1], [1, 4, 1], [1, 5, 1]];
+    $('#molecule-name').value = 'Etileno';
     renderAtoms();
     $('#analizador').scrollIntoView({ behavior: 'smooth' });
-    $('#matrix-input').value = '0 2 1 1 0 0\n2 0 0 0 1 1\n1 0 0 0 0 0\n1 0 0 0 0 0\n0 1 0 0 0 0\n0 1 0 0 0 0';
-    $('#matrix-labels').value = '';
-    $('#matrix-name').value = 'Eteno';
-    document.querySelector('[data-panel="matrix"]').classList.remove('hidden');
-    document.querySelector('[data-panel="builder"]').classList.add('hidden');
-    document.querySelector('.mode-tab[data-mode="matrix"]').classList.add('active');
-    document.querySelector('.mode-tab[data-mode="builder"]').classList.remove('active');
+    document.querySelector('[data-panel="builder"]').classList.remove('hidden');
+    document.querySelector('[data-panel="matrix"]').classList.add('hidden');
+    document.querySelector('[data-panel="pubchem"]').classList.add('hidden');
+    document.querySelector('.mode-tab[data-mode="builder"]').classList.add('active');
+    document.querySelector('.mode-tab[data-mode="matrix"]').classList.remove('active');
+    document.querySelector('.mode-tab[data-mode="pubchem"]').classList.remove('active');
     $('#analizador').scrollIntoView({ behavior: 'smooth' });
   }
 
