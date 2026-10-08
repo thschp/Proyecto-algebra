@@ -453,6 +453,188 @@ function renderGraph(data) {
   $('#graph-output').innerHTML = svg;
 }
 
+function distribuirEstructura(matrix, atoms) {
+  const n = matrix.length;
+  const positions = Array(n).fill(null);
+  const used = new Set();
+  const heavy = new Set(atoms.map((atom, i) => atom !== 'H' ? i : -1).filter((i) => i >= 0));
+  const key = (x, y) => `${x.toFixed(3)},${y.toFixed(3)}`;
+  const neighbors = (i, onlyHeavy = false) => matrix[i].map((bond, j) => bond > 0 && j !== i && (!onlyHeavy || heavy.has(j)) ? j : -1).filter((j) => j >= 0);
+  let componentOffset = 0;
+
+  function findCycle(component) {
+    const visited = new Set();
+    function dfs(current, parent, path) {
+      visited.add(current);
+      for (const next of neighbors(current, true)) {
+        if (!component.has(next) || next === parent) continue;
+        if (path.includes(next)) return path.slice(path.indexOf(next));
+        if (!visited.has(next)) {
+          const cycle = dfs(next, current, [...path, next]);
+          if (cycle) return cycle;
+        }
+      }
+      return null;
+    }
+    for (const start of component) {
+      if (!visited.has(start)) {
+        const cycle = dfs(start, -1, [start]);
+        if (cycle && cycle.length >= 3) return cycle;
+      }
+    }
+    return null;
+  }
+
+  function place(index, x, y) {
+    positions[index] = [x, y];
+    used.add(key(x, y));
+  }
+
+  const componentSeen = new Set();
+  for (const start of heavy) {
+    if (componentSeen.has(start)) continue;
+    const component = new Set([start]);
+    const queue = [start];
+    while (queue.length) {
+      const current = queue.shift();
+      componentSeen.add(current);
+      neighbors(current, true).forEach((next) => {
+        if (!component.has(next)) { component.add(next); queue.push(next); }
+      });
+    }
+
+    const cycle = findCycle(component);
+    const placedInComponent = new Set();
+    if (cycle) {
+      const radius = Math.max(1.8, cycle.length * 0.55);
+      cycle.forEach((atom, index) => {
+        const angle = -Math.PI / 2 + (index * Math.PI * 2) / cycle.length;
+        place(atom, radius * Math.cos(angle), radius * Math.sin(angle));
+        placedInComponent.add(atom);
+      });
+    } else {
+      const root = [...component].find((atom) => neighbors(atom, true).filter((next) => component.has(next)).length <= 1) ?? start;
+      place(root, 0, 0);
+      placedInComponent.add(root);
+    }
+
+    const pending = [...component].filter((atom) => !placedInComponent.has(atom));
+    while (pending.length) {
+      let progress = false;
+      for (let p = pending.length - 1; p >= 0; p--) {
+        const atom = pending[p];
+        const parent = neighbors(atom, true).find((next) => placedInComponent.has(next));
+        if (parent === undefined) continue;
+        const [px, py] = positions[parent];
+        const awayX = px === 0 && py === 0 ? 1 : px;
+        const awayY = py;
+        const length = Math.hypot(awayX, awayY) || 1;
+        const baseAngle = Math.atan2(awayY, awayX);
+        const alternatives = [baseAngle, baseAngle + Math.PI / 2, baseAngle - Math.PI / 2, baseAngle + Math.PI];
+        let candidate = null;
+        for (const angle of alternatives) {
+          const x = px + Math.cos(angle) * 1.65;
+          const y = py + Math.sin(angle) * 1.65;
+          if (![...placedInComponent].some((i) => Math.hypot(positions[i][0] - x, positions[i][1] - y) < 0.7)) { candidate = [x, y]; break; }
+        }
+        if (!candidate) candidate = [px + 1.65, py];
+        place(atom, candidate[0], candidate[1]);
+        placedInComponent.add(atom);
+        pending.splice(p, 1);
+        progress = true;
+      }
+      if (!progress) break;
+    }
+
+    for (const atom of component) {
+      const hydrogens = neighbors(atom).filter((next) => atoms[next] === 'H' && !positions[next]);
+      if (!positions[atom]) continue;
+      const [x, y] = positions[atom];
+      const heavyNeighbors = neighbors(atom, true).filter((next) => positions[next]);
+      let outwardAngle = Math.atan2(y, x);
+
+      if (heavyNeighbors.length === 1) {
+        const [neighborX, neighborY] = positions[heavyNeighbors[0]];
+        outwardAngle = Math.atan2(y - neighborY, x - neighborX);
+      } else if (heavyNeighbors.length > 1) {
+        const vector = heavyNeighbors.reduce((result, next) => [
+          result[0] + (positions[next][0] - x),
+          result[1] + (positions[next][1] - y)
+        ], [0, 0]);
+        outwardAngle = Math.atan2(-vector[1], -vector[0]);
+        if (Math.hypot(vector[0], vector[1]) < 0.01) outwardAngle = Math.PI / 2;
+      }
+
+      hydrogens.forEach((hydrogen, index) => {
+        const count = hydrogens.length;
+        const spread = count === 1
+          ? 0
+          : count === 2
+            ? (index === 0 ? -Math.PI / 3 : Math.PI / 3)
+            : (index - (count - 1) / 2) * (Math.PI / 3);
+        const angle = outwardAngle + spread;
+        let distance = 1.35;
+        let candidate = null;
+        while (!candidate && distance <= 2.5) {
+          const xCandidate = x + Math.cos(angle) * distance;
+          const yCandidate = y + Math.sin(angle) * distance;
+          const occupied = positions.some((position) => position && Math.hypot(position[0] - xCandidate, position[1] - yCandidate) < 0.75);
+          if (!occupied) candidate = [xCandidate, yCandidate];
+          distance += 0.2;
+        }
+        if (!candidate) candidate = [x + Math.cos(angle) * 1.35, y + Math.sin(angle) * 1.35];
+        place(hydrogen, candidate[0], candidate[1]);
+      });
+    }
+
+    const members = [...component].concat([...component].flatMap((atom) => neighbors(atom).filter((next) => atoms[next] === 'H')));
+    const minX = Math.min(...members.map((i) => positions[i][0]));
+    const maxX = Math.max(...members.map((i) => positions[i][0]));
+    members.forEach((i) => { positions[i][0] += componentOffset - minX; });
+    componentOffset += maxX - minX + 2.5;
+  }
+
+  positions.forEach((position, index) => {
+    if (!position) { positions[index] = [componentOffset, 0]; componentOffset += 2.5; }
+  });
+  return positions;
+}
+
+function renderGraph(data) {
+  const positions = distribuirEstructura(data.matrix, data.atoms);
+  const unit = 78;
+  const padding = 48;
+  const xs = positions.map(([x]) => x);
+  const ys = positions.map(([, y]) => y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const maxX = Math.max(...xs);
+  const maxY = Math.max(...ys);
+  const viewWidth = Math.max(280, (maxX - minX) * unit + padding * 2);
+  const viewHeight = Math.max(210, (maxY - minY) * unit + padding * 2);
+  const point = (index) => [(positions[index][0] - minX) * unit + padding, (positions[index][1] - minY) * unit + padding];
+  let svg = `<svg class="graph-svg" viewBox="0 0 ${viewWidth} ${viewHeight}" role="img" aria-label="Fórmula estructural">`;
+
+  for (let i = 0; i < data.matrix.length; i++) for (let j = i + 1; j < data.matrix.length; j++) {
+    const multiplicity = data.matrix[i][j];
+    if (!multiplicity) continue;
+    const [x1, y1] = point(i); const [x2, y2] = point(j);
+    const dx = x2 - x1; const dy = y2 - y1; const length = Math.hypot(dx, dy) || 1;
+    const ux = dx / length; const uy = dy / length; const nx = -uy; const ny = ux;
+    for (let line = 0; line < multiplicity; line++) {
+      const gap = (line - (multiplicity - 1) / 2) * 7;
+      svg += `<line x1="${x1 + ux * 18 + nx * gap}" y1="${y1 + uy * 18 + ny * gap}" x2="${x2 - ux * 18 + nx * gap}" y2="${y2 - uy * 18 + ny * gap}" stroke="#456d70" stroke-width="2"/>`;
+    }
+  }
+  data.atoms.forEach((atom, index) => {
+    const [x, y] = point(index);
+    svg += `<text class="structure-atom" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${atom || `A${index + 1}`}</text>`;
+  });
+  svg += '</svg>';
+  $('#graph-output').innerHTML = svg;
+  const graphCard = $('#graph-output').closest('.graph-result');
+  graphCard.classList.toggle('graph-wide', viewWidth / viewHeight > 2.2);
+}
 
 document.addEventListener('click', (event) => {
   const target = event.target;
