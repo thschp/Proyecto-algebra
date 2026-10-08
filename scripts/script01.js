@@ -490,6 +490,13 @@ function distribuirEstructura(matrix, atoms) {
     used.add(key(x, y));
   }
 
+  const angularGap = (a, b) => {
+    const diff = Math.abs(a - b) % (2 * Math.PI);
+    return diff > Math.PI ? 2 * Math.PI - diff : diff;
+  };
+
+  const isOccupied = (x, y) => positions.some((position) => position && Math.hypot(position[0] - x, position[1] - y) < 0.75);
+  
   const componentSeen = new Set();
   for (const start of heavy) {
     if (componentSeen.has(start)) continue;
@@ -572,7 +579,25 @@ function distribuirEstructura(matrix, atoms) {
           : count === 2
             ? (index === 0 ? -Math.PI / 3 : Math.PI / 3)
             : (index - (count - 1) / 2) * (Math.PI / 3);
-        const angle = outwardAngle + spread;
+        let angle = outwardAngle + spread;
+        
+        const bondAngles = neighbors(atom)
+          .filter((next) => positions[next])
+          .map((next) => Math.atan2(positions[next][1] - y, positions[next][0] - x));
+        const clearOfBonds = (a) => bondAngles.every((b) => angularGap(a, b) >= Math.PI / 4);
+        const hitsAtom = (a) => isOccupied(x + Math.cos(a) * 1.35, y + Math.sin(a) * 1.35);
+
+        if (!clearOfBonds(angle) || hitsAtom(angle)) {
+          let best = null;
+          for (let step = 0; step < 24; step++) {
+            const candidateAngle = angle + step * (Math.PI / 12);
+            if (hitsAtom(candidateAngle)) continue;
+            const gap = Math.min(Math.PI, ...bondAngles.map((b) => angularGap(candidateAngle, b)));
+            if (!best || gap > best.gap + 1e-9) best = { angle: candidateAngle, gap };
+          }
+          if (best) angle = best.angle;
+        }
+
         let distance = 1.35;
         let candidate = null;
         while (!candidate && distance <= 2.5) {
