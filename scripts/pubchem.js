@@ -60,9 +60,6 @@ function smilesAtom(label) {
   return token;
 }
 
-// Construye un SMILES no canónico a partir de la matriz. PubChem lo normaliza
-// al buscar la estructura, por lo que el orden de entrada de los átomos no afecta
-// al resultado de identificación.
 function matrixToSmiles(matrix, labels) {
   const atomCount = matrix.length;
   if (labels.length !== atomCount) throw new Error('La matriz y las etiquetas deben tener el mismo número de átomos.');
@@ -193,8 +190,6 @@ async function findSpanishNameInWikidata(cid, names) {
   return null;
 }
 
-// Expone el flujo para los dos paneles del analizador: matriz → SMILES →
-// PubChem → etiqueta española de Wikidata.
 window.autonameMolecule = async function autonameMolecule(matrix, labels) {
   const smiles = matrixToSmiles(matrix, labels);
   const pubchem = await fetchPubChemNameFromSmiles(smiles);
