@@ -742,9 +742,36 @@ document.addEventListener('change', (event) => {
   if (event.target.matches('.bond-type')) state.bonds[i][2] = Number(event.target.value);
 });
 
-$('#analyze-builder').addEventListener('click', () => {
+async function analyzeWithOptionalAutoname({ matrix, atoms, suppliedName, enabled, button, error }) {
+  let moleculeName = suppliedName;
+
+  if (enabled) {
+    if (typeof window.autonameMolecule !== 'function') {
+      throw new Error('La función de autonombre no está disponible. Recarga la página e inténtalo de nuevo.');
+    }
+
+    const originalLabel = button.innerHTML;
+    button.disabled = true;
+    button.textContent = 'Autonombrando molécula…';
+
+    try {
+      const identified = await window.autonameMolecule(matrix, atoms);
+      moleculeName = identified.name.charAt(0).toUpperCase() + identified.name.slice(1);
+    } catch (nameError) {
+      error.textContent = `No se pudo autonombrar la molécula: ${nameError.message}`;
+    } finally {
+      button.disabled = false;
+      button.innerHTML = originalLabel;
+    }
+  }
+
+  analyze(matrix, atoms, moleculeName);
+}
+
+$('#analyze-builder').addEventListener('click', async () => {
   const atoms = atomSymbols();
   const error = $('#builder-error');
+  const button = $('#analyze-builder');
 
   error.textContent = '';
 
@@ -759,23 +786,44 @@ $('#analyze-builder').addEventListener('click', () => {
   }
 
   try {
-    analyze(matrixFromBonds(atoms, state.bonds), atoms, $('#molecule-name').value.trim());
+    const matrix = matrixFromBonds(atoms, state.bonds);
+    await analyzeWithOptionalAutoname({
+      matrix,
+      atoms,
+      suppliedName: $('#molecule-name').value.trim(),
+      enabled: $('#auto-name-builder').checked,
+      button,
+      error
+    });
   } catch (analysisError) {
     error.textContent = `No se pudo generar la representación: ${analysisError.message}`;
     console.error(analysisError);
   }
 });
 
-$('#analyze-matrix').addEventListener('click', () => {
+$('#analyze-matrix').addEventListener('click', async () => {
   const error = $('#matrix-error');
+  const button = $('#analyze-matrix');
 
   error.textContent = '';
 
   try {
     const matrix = parseMatrix($('#matrix-input').value);
+    const hasManualLabels = Boolean($('#matrix-labels').value.trim());
+
+    if ($('#auto-name-matrix').checked && !hasManualLabels) {
+      throw new Error('Para autonombrar una matriz debes escribir una etiqueta para cada átomo.');
+    }
 
     const labels = readMatrixLabels($('#matrix-labels').value, matrix.length) || inferAtomLabels(matrix);
-    analyze(matrix, labels, $('#matrix-name').value.trim());
+    await analyzeWithOptionalAutoname({
+      matrix,
+      atoms: labels,
+      suppliedName: $('#matrix-name').value.trim(),
+      enabled: $('#auto-name-matrix').checked,
+      button,
+      error
+    });
   } catch (e) {
     error.textContent = e.message;
   }

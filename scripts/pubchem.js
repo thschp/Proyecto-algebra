@@ -5,12 +5,12 @@ const REQUEST_TIMEOUT_MS = 15000;
 const MAX_MATRIX_ATOMS = 80;           
 
 
-async function fetchWithTimeout(url) {
+async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    return await fetch(url, { signal: controller.signal });
+    return await fetch(url, { ...options, signal: controller.signal });
   } catch (error) {
     if (error.name === 'AbortError') {
       throw new Error('El servidor tardó demasiado en responder. Inténtalo de nuevo.');
@@ -43,6 +43,120 @@ async function fetchPubChemProperties(identifier) {
   return { cid: compound.CID, title: compound.Title, smiles };
 }
 
+const SMILES_ELEMENTS = new Map([
+  ['B', 'B'], ['C', 'C'], ['N', 'N'], ['O', 'O'], ['P', 'P'], ['S', 'S'],
+  ['F', 'F'], ['CL', 'Cl'], ['BR', 'Br'], ['I', 'I'], ['H', '[H]']
+]);
+
+function smilesBond(order) {
+  return ({ 1: '', 2: '=', 3: '#' })[order] ?? null;
+}
+
+function smilesAtom(label) {
+  const token = SMILES_ELEMENTS.get(String(label).trim().toUpperCase());
+  if (!token) {
+    throw new Error(`El átomo «${label}» no puede convertirse a SMILES. Usa símbolos químicos válidos.`);
+  }
+  return token;
+}
+
+// Construye un SMILES no canónico a partir de la matriz. PubChem lo normaliza
+// al buscar la estructura, por lo que el orden de entrada de los átomos no afecta
+// al resultado de identificación.
+function matrixToSmiles(matrix, labels) {
+  const atomCount = matrix.length;
+  if (labels.length !== atomCount) throw new Error('La matriz y las etiquetas deben tener el mismo número de átomos.');
+
+  const adjacent = matrix.map((row, atom) => row
+    .map((order, neighbor) => order > 0 && neighbor !== atom ? { neighbor, order } : null)
+    .filter(Boolean));
+  const parents = Array(atomCount).fill(-1);
+  const children = Array.from({ length: atomCount }, () => []);
+  const discovered = Array(atomCount).fill(-1);
+  const roots = [];
+  let discoveryIndex = 0;
+
+  function buildTree(atom, parent) {
+    parents[atom] = parent;
+    discovered[atom] = discoveryIndex++;
+    for (const edge of adjacent[atom]) {
+      if (edge.neighbor === parent || discovered[edge.neighbor] >= 0) continue;
+      children[atom].push(edge);
+      buildTree(edge.neighbor, atom);
+    }
+  }
+
+  for (let atom = 0; atom < atomCount; atom++) {
+    if (discovered[atom] < 0) {
+      roots.push(atom);
+      buildTree(atom, -1);
+    }
+  }
+
+  const ringMarkers = Array.from({ length: atomCount }, () => []);
+  const seenEdges = new Set();
+  let ringNumber = 1;
+  for (let atom = 0; atom < atomCount; atom++) {
+    for (const edge of adjacent[atom]) {
+      const key = atom < edge.neighbor ? `${atom}-${edge.neighbor}` : `${edge.neighbor}-${atom}`;
+      if (seenEdges.has(key)) continue;
+      seenEdges.add(key);
+      if (parents[atom] === edge.neighbor || parents[edge.neighbor] === atom) continue;
+      const first = discovered[atom] < discovered[edge.neighbor] ? atom : edge.neighbor;
+      const last = first === atom ? edge.neighbor : atom;
+      const marker = ringNumber < 10 ? String(ringNumber) : `%${ringNumber}`;
+      const bond = smilesBond(edge.order);
+      if (bond === null) throw new Error('La matriz contiene un orden de enlace no compatible con SMILES.');
+      ringMarkers[first].push(`${bond}${marker}`);
+      ringMarkers[last].push(marker);
+      ringNumber++;
+    }
+  }
+
+  function encode(atom) {
+    let output = smilesAtom(labels[atom]) + ringMarkers[atom].join('');
+    const nextAtoms = [...children[atom]].sort((a, b) => {
+      const aHydrogen = labels[a.neighbor].toUpperCase() === 'H';
+      const bHydrogen = labels[b.neighbor].toUpperCase() === 'H';
+      return Number(aHydrogen) - Number(bHydrogen);
+    });
+    const main = nextAtoms.shift();
+    for (const branch of nextAtoms) {
+      const bond = smilesBond(branch.order);
+      if (bond === null) throw new Error('La matriz contiene un orden de enlace no compatible con SMILES.');
+      output += `(${bond}${encode(branch.neighbor)})`;
+    }
+    if (main) {
+      const bond = smilesBond(main.order);
+      if (bond === null) throw new Error('La matriz contiene un orden de enlace no compatible con SMILES.');
+      output += `${bond}${encode(main.neighbor)}`;
+    }
+    return output;
+  }
+
+  return roots.map(encode).join('.');
+}
+
+async function fetchPubChemNameFromSmiles(smiles) {
+  const response = await fetchWithTimeout(
+    `${PUBCHEM_REST}/compound/smiles/property/Title,IUPACName/JSON`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: new URLSearchParams({ smiles })
+    }
+  );
+
+  if (response.status === 404 || response.status === 400) {
+    throw new Error('PubChem no reconoció esta estructura molecular.');
+  }
+  if (!response.ok) throw new Error(`PubChem respondió con un error (${response.status}).`);
+
+  const compound = (await response.json())?.PropertyTable?.Properties?.[0];
+  if (!compound?.CID) throw new Error('PubChem no devolvió un compuesto para esta estructura.');
+  return { cid: Number(compound.CID), title: compound.Title, iupacName: compound.IUPACName };
+}
+
 async function wikidataRequest(params) {
   const query = new URLSearchParams({ format: 'json', origin: '*', ...params });
   const response = await fetchWithTimeout(`${WIKIDATA_API}?${query}`);
@@ -50,6 +164,55 @@ async function wikidataRequest(params) {
   if (!response.ok) throw new Error(`Wikidata respondió con un error (${response.status}).`);
   return response.json();
 }
+
+async function findSpanishNameInWikidata(cid, names) {
+  for (const name of names.filter(Boolean)) {
+    const search = await wikidataRequest({
+      action: 'wbsearchentities',
+      search: name,
+      language: 'en',
+      uselang: 'es',
+      type: 'item',
+      limit: '8'
+    });
+    const candidates = search?.search ?? [];
+
+    for (const candidate of candidates) {
+      const entityData = await wikidataRequest({
+        action: 'wbgetentities',
+        ids: candidate.id,
+        props: 'labels|claims',
+        languages: 'es'
+      });
+      const entity = entityData?.entities?.[candidate.id];
+      const candidateCid = entity?.claims?.[WIKIDATA_PUBCHEM_CID]?.[0]?.mainsnak?.datavalue?.value;
+      const spanishLabel = entity?.labels?.es?.value;
+      if (Number(candidateCid) === cid && spanishLabel) return spanishLabel;
+    }
+  }
+  return null;
+}
+
+// Expone el flujo para los dos paneles del analizador: matriz → SMILES →
+// PubChem → etiqueta española de Wikidata.
+window.autonameMolecule = async function autonameMolecule(matrix, labels) {
+  const smiles = matrixToSmiles(matrix, labels);
+  const pubchem = await fetchPubChemNameFromSmiles(smiles);
+  let spanishName = null;
+
+  try {
+    spanishName = await findSpanishNameInWikidata(pubchem.cid, [pubchem.title, pubchem.iupacName]);
+  } catch (error) {
+    console.warn('No se pudo obtener la etiqueta en español de Wikidata.', error);
+  }
+
+  return {
+    name: spanishName || pubchem.title || pubchem.iupacName || 'Estructura molecular',
+    smiles,
+    cid: pubchem.cid,
+    translated: Boolean(spanishName)
+  };
+};
 
 async function findCidInWikidata(name) {
   const found = await wikidataRequest({

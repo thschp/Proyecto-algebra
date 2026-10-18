@@ -634,6 +634,13 @@ nav a,
   accent-color: var(--green);
 }
 
+.auto-name-hint {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .pubchem-info {
   margin-top: 14px;
   padding: 11px 14px;

@@ -108,6 +108,10 @@
 
           <label class="field-label" for="molecule-name">Nombre de la molécula <span>(opcional)</span></label>
           <input id="molecule-name" class="text-input" type="text" placeholder="Ej. Etanol">
+          <label class="check-label" for="auto-name-builder">
+            <input id="auto-name-builder" type="checkbox">
+            Autonombrar molécula
+          </label>
 
           <div class="atoms-toolbar">
             <label class="field-label">Átomos</label>
@@ -148,6 +152,11 @@
 
           <label class="field-label" for="matrix-labels">Etiquetas de los átomos <span>(opcional, una por átomo)</span></label>
           <input id="matrix-labels" class="text-input" type="text" placeholder="Ej. C C O H H H H H H">
+          <label class="check-label" for="auto-name-matrix">
+            <input id="auto-name-matrix" type="checkbox">
+            Autonombrar molécula
+          </label>
+          <p class="auto-name-hint">Para autonombrar desde una matriz debes indicar las etiquetas de todos los átomos.</p>
           <div class="matrix-hint"><span>Separa las etiquetas con espacios</span><span>Si lo dejas vacío se infieren automáticamente</span></div>
 
           <label class="field-label matrix-label" for="matrix-input">Matriz de adyacencia</label>
