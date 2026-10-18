@@ -567,7 +567,6 @@ $('#analyze-matrix').addEventListener('click', async () => {
     if ($('#auto-name-matrix').checked && !hasManualLabels) {
       throw new Error('Para autonombrar una matriz debes escribir una etiqueta para cada átomo.');
     }
-
     const labels = readMatrixLabels($('#matrix-labels').value, matrix.length) || inferAtomLabels(matrix);
     await analyzeWithOptionalAutoname({
       matrix,
