@@ -415,7 +415,7 @@ function renderGraph(data) {
 }
 
 document.addEventListener('click', (event) => {
-  const target = event.target;
+  const target = event.target.closest('button') ?? event.target;
 
   if (target.matches('[data-scroll]')) {
     $(target.dataset.scroll).scrollIntoView({ behavior: 'smooth' });

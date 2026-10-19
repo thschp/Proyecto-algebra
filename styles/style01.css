@@ -85,22 +85,10 @@ nav {
   margin-left: 100px;
 }
 
-nav a,
-.header-link {
+nav a {
   color: var(--muted);
   text-decoration: none;
   font-size: 13px;
-}
-
-.header-link {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.header-link span {
-  color: var(--orange);
-  margin-left: 7px;
-  font-size: 18px;
 }
 
 .hero {
@@ -154,23 +142,6 @@ nav a,
   gap: 12px;
   margin-top: 32px;
 }
-
-.hero-note {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  margin-top: 70px;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.note-line {
-  width: 36px;
-  height: 1px;
-  background: var(--orange);
-}
-
 
 .btn {
   cursor: pointer;
@@ -232,12 +203,16 @@ nav a,
 .workspace-section,
 .results-section {
   padding: 95px 3vw;
-  background: var(--white);
 }
 
 .workspace-section {
   padding-left: 7vw;
   padding-right: 7vw;
+  background: var(--white);
+}
+
+.results-section {
+  background: var(--cream);
 }
 
 .section-heading,
@@ -531,10 +506,6 @@ nav a,
   transform: none;
 }
 
-.results-section {
-  background: var(--cream);
-}
-
 .results-heading {
   margin-bottom: 34px;
 }
@@ -769,16 +740,6 @@ nav a,
 }
 
 
-footer {
-  display: flex;
-  justify-content: space-between;
-  padding: 25px 7vw;
-  color: var(--muted);
-  background: var(--white);
-  font-size: 11px;
-}
-
-
 .hidden {
   display: none !important;
 }
@@ -844,10 +805,6 @@ footer {
     padding: 0 5vw;
   }
 
-  .header-link {
-    display: none;
-  }
-
   .mode-tabs {
     gap: 22px;
     overflow-x: auto;
@@ -880,11 +837,6 @@ footer {
 
   .metric-card strong {
     font-size: 32px;
-  }
-
-  footer {
-    display: block;
-    line-height: 2;
   }
 
 }
