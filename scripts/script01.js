@@ -427,12 +427,12 @@ document.addEventListener('click', (event) => {
     $('#molecule-name').value = 'Etileno';
     renderAtoms();
     $('#analizador').scrollIntoView({ behavior: 'smooth' });
-    document.querySelector('[data-panel="builder"]').classList.remove('hidden');
-    document.querySelector('[data-panel="matrix"]').classList.add('hidden');
-    document.querySelector('[data-panel="pubchem"]').classList.add('hidden');
-    document.querySelector('.mode-tab[data-mode="builder"]').classList.add('active');
-    document.querySelector('.mode-tab[data-mode="matrix"]').classList.remove('active');
-    document.querySelector('.mode-tab[data-mode="pubchem"]').classList.remove('active');
+    $('[data-panel="builder"]').classList.remove('hidden');
+    $('[data-panel="matrix"]').classList.add('hidden');
+    $('[data-panel="pubchem"]').classList.add('hidden');
+    $('[class="mode-tab"][data-mode="builder"]').classList.add('active');
+    $('[class="mode-tab"][data-mode="matrix"]').classList.remove('active');
+    $('[class="mode-tab"][data-mode="pubchem"]').classList.remove('active');
     $('#analizador').scrollIntoView({ behavior: 'smooth' });
   }
 
